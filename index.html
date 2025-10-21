@@ -1,0 +1,67 @@
+using System;
+using System.Security.Cryptography;
+using System.Text;
+
+class Program
+{
+    static void Main()
+    {
+        string targetHash = "6eb228fb5b59ab49a45a48bdd9e5f0ed65b43afb52ec72cc825a567986630827"; // Replace with the target hash you want to crack
+        char[] charSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
+        int maxLength = 5; // Maximum length of the password to try
+
+        long attemptCount = 0;
+
+        for (int length = 1; length <= maxLength; length++)
+        {
+            BruteForce(charSet, length, targetHash, ref attemptCount);
+        }
+
+        Console.WriteLine("Total attempts: " + attemptCount);
+    }
+
+    static void BruteForce(char[] charSet, int length, string targetHash, ref long attemptCount)
+    {
+        char[] password = new char[length];
+        BruteForceRecursive(charSet, password, 0, targetHash, ref attemptCount);
+    }
+
+    static void BruteForceRecursive(char[] charSet, char[] password, int index, string targetHash, ref long attemptCount)
+    {
+        if (index == password.Length)
+        {
+            string attempt = new string(password);
+            string hash = ComputeSha256Hash(attempt);
+            attemptCount++;
+            if(attemptCount < 241){
+            Console.WriteLine("Attempt " + attemptCount + ": " + attempt + " -> " + hash);}
+            if (hash == targetHash)
+            {
+                Console.WriteLine("Password found: " + attempt);
+                return;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < charSet.Length; i++)
+            {
+                password[index] = charSet[i];
+                BruteForceRecursive(charSet, password, index + 1, targetHash, ref attemptCount);
+            }
+        }
+    }
+
+    static string ComputeSha256Hash(string input)
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                builder.Append(bytes[i].ToString("x2"));
+            }
+            return builder.ToString();
+        }
+    }
+}
